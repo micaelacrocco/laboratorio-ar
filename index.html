@@ -1,64 +1,359 @@
-<!DOCTYPE html><html>
-  <head>
-    <title>Treasure Hunt - Multi Floor (Button Version)</title>
-    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-    <style>
-      body { margin: 0; overflow: hidden; }
-      #ui {
-        position: fixed;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        display: flex;
-        gap: 10px;
-      }
-      button {
-        background-color: #333;
-        color: white;
-        font-size: 16px;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 8px;
-      }
-    </style>
-  </head>
-  <body>
-    <div id="ui">
-      <button id="downBtn">⬇ Piso Inferior</button>
-      <button id="upBtn">⬆ Piso Superior</button>
-    </div><a-scene embedded vr-mode-ui="enabled: false" arjs="sourceType: webcam; trackingMethod: best;">
-  <a-camera position="0 1.6 0"></a-camera>
-  <a-entity id="treasure" gltf-model="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/ToyCar/glTF/ToyCar.gltf" position="0 0 -3" scale="1 1 1"></a-entity>
-  <a-text id="floorLabel" value="Piso 1" position="0 1.5 -2" color="gold"></a-text>
-</a-scene>
+<!DOCTYPE html>
+<html>
 
-<script>
-  let currentFloor = 1;
-  const treasure = document.getElementById('treasure');
-  const floorLabel = document.getElementById('floorLabel');
-  const upBtn = document.getElementById('upBtn');
-  const downBtn = document.getElementById('downBtn');
-
-  function updateFloorDisplay() {
-    floorLabel.setAttribute('value', `Piso ${currentFloor}`);
-    const height = (currentFloor - 1) * 3; // 3m por piso
-    treasure.setAttribute('position', `0 ${height} -3`);
-  }
-
-  upBtn.onclick = () => {
-    currentFloor++;
-    updateFloorDisplay();
-  };
-
-  downBtn.onclick = () => {
-    if (currentFloor > 1) {
-      currentFloor--;
-      updateFloorDisplay();
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Treasure Hunt AR Experience</title>
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+      -webkit-font-smoothing: antialiased;
     }
-  };
 
-  updateFloorDisplay();
-</script>
+    /* Loading */
+    #loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
 
-  </body>
+    #loading h2 {
+      margin: 32px 0 8px 0;
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+    }
+
+    #loading p {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 400;
+      opacity: 0.85;
+      letter-spacing: -0.2px;
+    }
+
+    .spinner {
+      width: 44px;
+      height: 44px;
+      border: 3px solid rgba(255, 255, 255, 0.2);
+      border-top: 3px solid white;
+      border-radius: 50%;
+      animation: spin 0.8s cubic-bezier(0.4, 0.0, 0.2, 1) infinite;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Error */
+    #error {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #f2f2f7;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 20px;
+      z-index: 10000;
+    }
+
+    #error h3 {
+      margin: 0 0 12px 0;
+      font-size: 26px;
+      font-weight: 600;
+      color: #000;
+      letter-spacing: -0.5px;
+    }
+
+    #error p {
+      margin: 0 0 16px 0;
+      font-size: 16px;
+      font-weight: 400;
+      color: #8e8e93;
+      max-width: 300px;
+      line-height: 1.5;
+      letter-spacing: -0.2px;
+      text-align: center;
+    }
+
+    #error button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 14px 40px;
+      font-size: 17px;
+      font-weight: 600;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      letter-spacing: -0.3px;
+    }
+
+    #error button:active {
+      transform: scale(0.96);
+    }
+
+    /* Pantalla de inicio */
+    #startScreen {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9998;
+      text-align: center;
+      padding: 20px;
+    }
+
+    #startScreen h2 {
+      font-size: 28px;
+      font-weight: 600;
+      margin: 0 0 16px 0;
+      letter-spacing: -0.5px;
+    }
+
+    #startScreen p {
+      font-size: 16px;
+      margin: 16px 0 32px 0;
+      opacity: 0.9;
+      letter-spacing: -0.2px;
+    }
+
+    #startBtn {
+      background: white;
+      color: #667eea;
+      border: none;
+      padding: 16px 48px;
+      font-size: 18px;
+      font-weight: 600;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      transition: all 0.2s ease;
+    }
+
+    #startBtn:active {
+      transform: scale(0.96);
+    }
+
+    /* Barra de progreso */
+    #markerProgressContainer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 12px;
+      background: rgba(0, 0, 0, 0.1);
+      z-index: 10000;
+    }
+
+    #markerProgressBar {
+      width: 0%;
+      height: 100%;
+      background: #667eea;
+      transition: width 0.3s ease;
+    }
+
+    /* 🕒 Contador */
+    #timer {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: rgba(0, 0, 0, 0.6);
+      color: white;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      z-index: 10001;
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="markerProgressContainer">
+    <div id="markerProgressBar"></div>
+  </div>
+
+  <div id="loading">
+    <div class="spinner"></div>
+    <h2>Cargando cámara AR...</h2>
+    <p>Por favor, permite el acceso a la cámara</p>
+  </div>
+
+  <div id="startScreen">
+    <h2>¡Búsqueda del Tesoro AR!</h2>
+    <img src="https://cdn-icons-png.flaticon.com/512/7957/7957616.png" alt="Icono" width="100" height="100">
+    <p>Escanea los marcadores para ver las pistas!</p>
+    <button id="startBtn">Comenzar</button>
+  </div>
+
+  <div id="error">
+    <h3>No se puede acceder</h3>
+    <p id="errorMsg"></p>
+    <button onclick="location.reload()">Intentar de nuevo</button>
+  </div>
+
+  <div id="timer">00:00</div>
+
+  <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;" vr-mode-ui="enabled: false">
+    <a-assets>
+      <audio id="sound1" preload="auto">
+        <source src="assets/sounds/game-unlock.mp3" type="audio/mpeg">
+      </audio>
+      <audio id="sound2" preload="auto">
+        <source src="assets/sounds/victory.mp3" type="audio/mpeg">
+      </audio>
+    </a-assets>
+
+    <a-marker type="pattern" url="markers/pattern-1.patt"></a-marker>
+    <a-marker type="pattern" url="markers/pattern-2.patt"></a-marker>
+    <a-marker type="pattern" url="markers/pattern-3.patt"></a-marker>
+    <a-marker type="pattern" url="markers/pattern-4.patt"></a-marker>
+
+    <a-entity camera></a-entity>
+  </a-scene>
+
+  <script>
+    let cameraReady = false;
+    let audioEnabled = false;
+    const totalMarkers = 4;
+    let currentIndex = 0;
+    const progressBar = document.getElementById('markerProgressBar');
+
+    let timerInterval;
+    let startTime;
+    const timerDisplay = document.getElementById('timer');
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('startBtn').addEventListener('click', () => {
+        audioEnabled = true;
+        document.getElementById('startScreen').style.display = 'none';
+
+        startTimer();
+
+        ['sound1', 'sound2'].forEach(id => {
+          const audio = document.getElementById(id);
+          if (audio) {
+            audio.load();
+            audio.volume = 0.8;
+          }
+        });
+      });
+    });
+
+    function markerFound(index) {
+      if (index === currentIndex) {
+        currentIndex++;
+        const percent = (currentIndex / totalMarkers) * 100;
+        progressBar.style.width = percent + '%';
+        console.log(`Marcador correcto! Avanzando: ${currentIndex}/${totalMarkers}`);
+
+        if (currentIndex === totalMarkers) {
+          stopTimer();
+        }
+        return true;
+      }
+      console.log(`Marcador fuera de orden o ya escaneado: ${index + 1}`);
+      return false;
+    }
+
+    document.querySelectorAll('a-marker').forEach((marker, index) => {
+      marker.addEventListener('markerFound', () => {
+        if (!audioEnabled) return;
+        const isNew = markerFound(index);
+        if (!isNew) return;
+
+        let audioId = (index <= 2) ? 'sound1' : 'sound2';
+        const audioEl = document.getElementById(audioId);
+        if (audioEl) {
+          audioEl.currentTime = 0;
+          audioEl.play().catch(err => console.error('Error al reproducir:', err));
+        }
+      });
+    });
+
+    window.addEventListener('arjs-video-loaded', () => {
+      cameraReady = true;
+      hideLoading();
+    });
+
+    function hideLoading() {
+      setTimeout(() => {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('startScreen').style.display = 'flex';
+      }, 500);
+    }
+
+    setTimeout(() => {
+      if (!cameraReady) hideLoading();
+    }, 5000);
+
+    window.addEventListener('error', () => {
+      showError('Error al cargar AR. Asegúrate de estar usando HTTPS o localhost.');
+    });
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(() => console.log('Permiso de cámara concedido'))
+      .catch(() => {
+        showError('No se pudo acceder a la cámara. Por favor, concede los permisos necesarios.');
+      });
+
+    function showError(msg) {
+      document.getElementById('loading').style.display = 'none';
+      const errorDiv = document.getElementById('error');
+      errorDiv.style.display = 'flex';
+      document.getElementById('errorMsg').textContent = msg;
+    }
+
+    function startTimer() {
+      startTime = Date.now();
+      timerDisplay.style.display = 'block';
+      timerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        const minutes = String(Math.floor(elapsed / 60)).padStart(2, '0');
+        const seconds = String(elapsed % 60).padStart(2, '0');
+        timerDisplay.textContent = `${minutes}:${seconds}`;
+      }, 1000);
+    }
+
+    function stopTimer() {
+      clearInterval(timerInterval);
+      timerDisplay.textContent += " ✅";
+    }
+  </script>
+</body>
 </html>
