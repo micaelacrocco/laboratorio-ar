@@ -185,7 +185,6 @@
       transition: width 0.3s ease;
     }
 
-    /* 🕒 Contador */
     #timer {
       position: fixed;
       top: 20px;
@@ -215,10 +214,15 @@
   </div>
 
   <div id="startScreen">
-    <h2>¡Búsqueda del Tesoro AR!</h2>
+    <h2>Búsqueda del Tesoro AR</h2>
     <img src="https://cdn-icons-png.flaticon.com/512/7957/7957616.png" alt="Icono" width="100" height="100">
-    <p>Escanea los marcadores para ver las pistas!</p>
-    <button id="startBtn">Comenzar</button>
+    <p style="max-width: 320px; line-height: 1.6;">
+      <strong>¡Bienvenido aventurero!</strong><br><br>
+      Tu misión: encontrar 4 marcadores secretos escondidos por el campus.<br><br>
+      <em>Primera pista:</em> Tu aventura comienza en la entrada del <strong>Edificio Sacré Coeur</strong>.<br><br>
+      Usa tu cámara para escanear cada marcador y descubrir la siguiente ubicación. ¡Buena suerte!
+    </p>
+    <button id="startBtn">Comenzar Aventura</button>
   </div>
 
   <div id="error">
@@ -239,10 +243,45 @@
       </audio>
     </a-assets>
 
-    <a-marker type="pattern" url="markers/pattern-1.patt"></a-marker>
-    <a-marker type="pattern" url="markers/pattern-2.patt"></a-marker>
-    <a-marker type="pattern" url="markers/pattern-3.patt"></a-marker>
-    <a-marker type="pattern" url="markers/pattern-4.patt"></a-marker>
+    <!-- MARCADOR 1: PISTA 1 -->
+    <a-marker type="pattern" url="markers/pattern-1.patt">
+      <a-entity 
+        gltf-model="assets/3ds/Marcador1.glb" 
+        scale="10 10 10" 
+        position="0 0 0" 
+        rotation="90 -180 0">
+      </a-entity>
+    </a-marker>
+
+    <!-- MARCADOR 2: PISTA 2 -->
+    <a-marker type="pattern" url="markers/pattern-2.patt">
+      <a-entity 
+        gltf-model="assets/3ds/Marcador2.glb" 
+        scale="10 10 10" 
+        position="0 0 0" 
+        rotation="0 0 0">
+      </a-entity>
+    </a-marker>
+
+    <!-- MARCADOR 3: PISTA 3 -->
+    <a-marker type="pattern" url="markers/pattern-3.patt">
+      <a-entity 
+        gltf-model="assets/3ds/Marcador3.glb" 
+        scale="10 10 10" 
+        position="0 0 0" 
+        rotation="0 0 0">
+      </a-entity>
+    </a-marker>
+
+    <!-- MARCADOR 4: TESORO! -->
+    <a-marker type="pattern" url="markers/pattern-4.patt">
+      <a-entity 
+        gltf-model="assets/3ds/Marcador4.glb" 
+        scale="10 10 10" 
+        position="0 0 0" 
+        rotation="0 0 0">
+      </a-entity>
+    </a-marker>
 
     <a-entity camera></a-entity>
   </a-scene>
